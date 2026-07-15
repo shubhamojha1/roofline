@@ -1,0 +1,16 @@
+# Build artifacts
+build/
+*.exe
+*.exp
+*.lib
+*.obj
+*.pdb
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Results (JSON per kernel run) — keep curated examples only
+results/*
+!results/examples/

@@ -1,0 +1,53 @@
+{
+  "$schema_note": "states: not_started -> active -> blocked -> passing; only a successful run of `verification` may set state to passing",
+  "features": [
+    {
+      "id": "m1-timing-and-smoke-kernel",
+      "behavior": "profiler/timing.cu provides reusable GpuTimer (cudaEvent start/stop, elapsed ms); kernels/00_elementwise_add.cu compiles standalone, runs correctly, and reports elapsed ms via GpuTimer",
+      "verification": "python scripts/check.py && nvcc -arch=sm_89 kernels/00_elementwise_add.cu -o build/00_elementwise_add.exe && build\\00_elementwise_add.exe",
+      "state": "passing"
+    },
+    {
+      "id": "m2-nvml-specs",
+      "behavior": "profiler/nvml_specs.cpp prints peak FP32 TFLOP/s and memory bandwidth for device 0 via NVML, falling back to CLAUDE.md desktop-4070 numbers on failure; output is JSON",
+      "verification": "python scripts/check.py && build\\nvml_specs.exe outputs valid JSON with tflops>0 and bandwidth_gbs>0",
+      "state": "not_started"
+    },
+    {
+      "id": "m3-gemm-kernels",
+      "behavior": "kernels/01_naive_gemm.cu and kernels/02_tiled_gemm.cu compile standalone, verify results against CPU reference, and report analytic FLOPs (2*M*N*K) plus elapsed ms",
+      "verification": "python scripts/check.py && both gemm exes run with exit code 0 and print PASS on correctness check",
+      "state": "not_started"
+    },
+    {
+      "id": "m4-cupti-dram-bytes",
+      "behavior": "profiler/cupti_counters.cpp exposes measure_dram_bytes(kernel_launch_fn) returning dram__bytes.sum per launch; kernels remain CUPTI-unaware",
+      "verification": "python scripts/check.py && cupti test exe reports nonzero dram bytes for a known-size copy kernel within 2x of analytic bytes",
+      "state": "not_started"
+    },
+    {
+      "id": "m5-softmax-and-naive-attention",
+      "behavior": "kernels/03_softmax.cu and kernels/04_naive_attention.cu compile standalone, pass CPU-reference correctness checks, report analytic FLOPs and bytes",
+      "verification": "python scripts/check.py && both exes run with exit code 0 and print PASS",
+      "state": "not_started"
+    },
+    {
+      "id": "m6-cli-orchestration",
+      "behavior": "cli/roofline.py runs each kernel exe, collects (kernel_name, arithmetic_intensity, achieved_flops), writes results/<kernel>.json",
+      "verification": "python scripts/check.py && python cli/roofline.py --all exits 0 and results/*.json exist with required keys",
+      "state": "not_started"
+    },
+    {
+      "id": "m7-roofline-plotter",
+      "behavior": "plot/plot_roofline.py renders log-log roofline.png from results JSON: compute roof, bandwidth roof, ridge point label, one scatter point per kernel",
+      "verification": "python scripts/check.py && python cli/roofline.py --all produces roofline.png containing all kernel points",
+      "state": "not_started"
+    },
+    {
+      "id": "m8-flash-attention-capstone",
+      "behavior": "kernels/05_flash_attention.cu (FA2 tiled, online softmax, causal mask) passes correctness vs naive attention and appears on the same roofline plot visibly closer to the compute roof",
+      "verification": "python scripts/check.py && FA exe prints PASS vs naive reference && roofline.png shows both attention points with FA at higher arithmetic intensity",
+      "state": "not_started"
+    }
+  ]
+}

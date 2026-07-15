@@ -1,0 +1,4 @@
+# Needed from milestone 6 (cli/) and 7 (plot/) onward.
+# scripts/check.py is deliberately stdlib-only and needs none of these.
+matplotlib>=3.9
+pytest>=8.0
